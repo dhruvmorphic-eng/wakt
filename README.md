@@ -322,6 +322,101 @@ Key topics:
 
 ---
 
+## Wakt-Original Features
+
+These features are built on top of Laya's core engine and are unique to Wakt.
+
+### Decision Pipelines
+
+Chain multiple decisions with conditional branching — the output of one step feeds the next:
+
+```python
+from laya import Router
+from laya.pipeline import Pipeline
+
+router = Router()
+pipe = Pipeline(router)
+
+pipe.add_step("triage", {
+    "department": {"type": "choice", "instructions": "Which department?",
+                   "criteria": {"billing": "payments", "technical": "bugs", "other": "rest"}},
+    "urgency": {"type": "score", "instructions": "How urgent?",
+                "criteria": ["low", "medium", "critical"]},
+})
+
+pipe.add_step("billing_detail", {
+    "refund": {"type": "noul", "instructions": "Is a refund requested?"},
+}, condition=lambda ctx: ctx["triage"]["department"]["choice"] == "billing")
+
+result = pipe.run("We were billed twice for $49.99, please refund.")
+print(result.path)          # ['triage', 'billing_detail']
+print(result.answers)       # merged answers from all steps that ran
+print(result.elapsed_ms)    # total wall-clock time
+```
+
+Features: conditional branching, state transforms, `dry_run()` previews, `max_steps` safety limits, `on_complete` callbacks.
+
+### Decision Explainability
+
+Understand *why* a decision was made with human-readable explanations:
+
+```python
+from laya.explain import explain, format_explanation
+
+result = router.predict(state, questions)
+explanation = explain(result, questions)
+
+print(explanation.summary)
+# "Answered 3 questions using the english checkpoint. 2/3 with high confidence. 1 flag raised."
+
+print(explanation.per_question["department"].reasoning)
+# "Strongly chose 'billing' (85% probability), well ahead of 'technical' (10%)."
+
+print(explanation.flags)
+# ["Very close call on 'urgency' (margin 3.2%)."]
+
+print(format_explanation(explanation, verbose=True))  # full distribution + entropy
+```
+
+### Smart Decision Caching
+
+Avoid redundant model calls with TTL-based LRU caching:
+
+```python
+from laya.cache import CachedRouter
+
+cached = CachedRouter(router, ttl=300, max_size=10_000)
+
+r1 = cached.predict(state, questions)  # ~33ms (model runs)
+r2 = cached.predict(state, questions)  # <0.1ms (cache hit)
+
+print(cached.stats)
+# CacheStats(hits=1, misses=1, hit_rate=0.50, evictions=0, expirations=0, size=1/10000)
+```
+
+Thread-safe. Batch-aware (`predict_batch` checks cache per-request). Drop-in replacement for Router.
+
+### A/B Testing Framework
+
+Compare checkpoints, question schemas, or thresholds with statistical rigor:
+
+```python
+from laya.testing import Experiment
+
+exp = Experiment("billing-routing-v2")
+exp.add_arm("baseline", questions=questions_v1)
+exp.add_arm("candidate", questions=questions_v2, model="laya-typed-decisions")
+
+states = [{"body": t} for t in ticket_texts]
+report = exp.run(router, states)
+
+print(report.agreement_rate)   # 0.87 — arms agree 87% of the time
+print(report.summary)          # per-question breakdown + timing
+report.to_json("experiment.json")
+```
+
+---
+
 ## Contributing
 
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.

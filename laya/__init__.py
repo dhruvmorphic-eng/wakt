@@ -43,6 +43,15 @@ _LAZY_ATTRS = {
     "LayaTriage": (".integrations", "LayaTriage"),
     "LayaEvaluator": (".integrations", "LayaEvaluator"),
     "LayaDecision": (".integrations", "LayaDecision"),
+    "Pipeline": (".pipeline", "Pipeline"),
+    "PipelineResult": (".pipeline", "PipelineResult"),
+    "explain": (".explain", "explain"),
+    "format_explanation": (".explain", "format_explanation"),
+    "Explanation": (".explain", "Explanation"),
+    "DecisionCache": (".cache", "DecisionCache"),
+    "CachedRouter": (".cache", "CachedRouter"),
+    "Experiment": (".testing", "Experiment"),
+    "ExperimentReport": (".testing", "ExperimentReport"),
 }
 
 
@@ -107,5 +116,14 @@ __all__ = [
     "decide",
     "decide_batch",
     "DecisionResult",
+    "Pipeline",
+    "PipelineResult",
+    "explain",
+    "format_explanation",
+    "Explanation",
+    "DecisionCache",
+    "CachedRouter",
+    "Experiment",
+    "ExperimentReport",
     "__version__",
 ]
