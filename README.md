@@ -1,4 +1,5 @@
 <p align="center">
+  <img src="assets/wakt-logo.png" alt="Wakt" width="180" />
   <h1 align="center">Wakt</h1>
   <p align="center"><strong>Instant decisions. Any language. One forward pass.</strong></p>
 </p>
